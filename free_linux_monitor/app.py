@@ -25,6 +25,18 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+# Force the GTK backend to X11 when running on Wayland. The Wayland protocol
+# does not let clients place their own windows at absolute screen coordinates
+# (xdg_toplevel.move is "best-effort" and Mutter / GNOME Shell ignores it
+# entirely), so the dashboard ends up wherever the compositor decides — far
+# from the tray icon. Routing through XWayland costs us native blur on the
+# Liquid Glass theme but lets gtk_window_move() actually work, putting the
+# panel at the calculated top-right anchor. Set FREE_LINUX_MONITOR_NATIVE=1
+# in the environment to opt out (e.g. on wlroots-based compositors that
+# support layer-shell, where you'd want to write a different anchor path).
+if os.environ.get("WAYLAND_DISPLAY") and not os.environ.get("FREE_LINUX_MONITOR_NATIVE"):
+    os.environ["GDK_BACKEND"] = "x11"
+
 import gi
 
 gi.require_version("Gtk", "3.0")
@@ -88,7 +100,7 @@ class Prefs:
     """Tiny JSON-backed config — equivalent of UserDefaults on macOS."""
 
     DEFAULTS = {
-        "showLiveMetrics": False,
+        "showLiveMetrics": True,
         "showMemoryBreakdown": False,
         "theme": Theme.LIQUID,
         "autoReleaseMode": AutoReleaseMode.NOTIFY.value,
