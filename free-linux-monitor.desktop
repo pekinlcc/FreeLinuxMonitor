@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Free Linux Monitor
+Comment=Minimal system tray monitor with retro CRT / Liquid Glass themes
+Exec=python3 -m free_linux_monitor
+Icon=free-linux-monitor
+Terminal=false
+Categories=System;Monitor;Utility;
+StartupNotify=false
+X-GNOME-Autostart-enabled=true

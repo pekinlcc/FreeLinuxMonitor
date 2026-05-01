@@ -1,0 +1,5 @@
+#!/bin/sh
+# Drop the Linux page cache + dentries + inodes — closest analog of macOS
+# /usr/sbin/purge. Must be invoked as root (via pkexec or sudo).
+sync
+echo 3 > /proc/sys/vm/drop_caches

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Free Linux Monitor</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-liquid">
+  <div class="container">
+
+    <!-- Fallout-only header -->
+    <div class="f-header only-fallout">
+      <div class="f-logo">&#9670; VAULT-TEC INDUSTRIES &#9670;</div>
+      <div class="f-model">PIP-BOY 3000 // LINUX SYSTEMS</div>
+    </div>
+
+    <!-- Liquid-only header -->
+    <div class="l-header only-liquid">
+      <span class="l-title">System Monitor</span>
+      <span class="l-time" id="l-time">--:--:--</span>
+    </div>
+
+    <div class="divider only-fallout">&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;</div>
+
+    <div class="metrics">
+
+      <!-- CPU -->
+      <div class="metric">
+        <div class="metric-top">
+          <span class="metric-name"><span class="only-fallout">CPU</span><span class="only-liquid">CPU</span></span>
+          <span class="metric-pct" id="cpu-pct">--- %</span>
+        </div>
+        <div class="bar-ascii only-fallout" id="cpu-bar">&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;</div>
+        <div class="bar-pill only-liquid"><div class="fill cpu" id="cpu-pill"></div></div>
+      </div>
+
+      <!-- MEMORY -->
+      <div class="metric" id="metric-memory">
+        <div class="metric-top">
+          <span class="metric-name">MEMORY</span>
+          <span class="metric-pct" id="mem-pct">--- %</span>
+        </div>
+
+        <!-- single bar (only when breakdown is OFF) -->
+        <div class="bar-ascii only-fallout only-no-breakdown" id="mem-bar">&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;</div>
+        <div class="bar-pill only-liquid only-no-breakdown"><div class="fill mem" id="mem-pill"></div></div>
+
+        <!-- breakdown stacked bar -->
+        <div class="mem-stacked-ascii only-fallout only-breakdown" id="mem-stacked-ascii"></div>
+        <div class="mem-stacked-pill only-liquid only-breakdown" id="mem-stacked-pill">
+          <span class="app"></span><span class="wire"></span><span class="comp"></span><span class="cach"></span><span class="free"></span>
+        </div>
+
+        <!-- 5-row legend (only when breakdown is ON) -->
+        <div class="mem-rows only-breakdown" id="mem-rows">
+          <div class="mem-row"><span class="sw app"></span><span class="nm">APP</span>    <span class="vl" id="mem-app">—</span></div>
+          <div class="mem-row"><span class="sw wire"></span><span class="nm">WIRED</span> <span class="vl" id="mem-wire">—</span></div>
+          <div class="mem-row"><span class="sw comp"></span><span class="nm">COMPR</span> <span class="vl" id="mem-comp">—</span></div>
+          <div class="mem-row"><span class="sw cach"></span><span class="nm">CACHE</span> <span class="vl" id="mem-cach">—</span></div>
+          <div class="mem-row"><span class="sw free"></span><span class="nm">FREE</span>   <span class="vl" id="mem-free">—</span></div>
+        </div>
+
+        <div class="mem-release-toast" id="mem-release-toast"></div>
+      </div>
+
+      <!-- GPU -->
+      <div class="metric">
+        <div class="metric-top">
+          <span class="metric-name">GPU</span>
+          <span class="metric-pct" id="gpu-pct">--- %</span>
+        </div>
+        <div class="bar-ascii only-fallout" id="gpu-bar">&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;</div>
+        <div class="bar-pill only-liquid"><div class="fill gpu" id="gpu-pill"></div></div>
+      </div>
+
+      <!-- DISK -->
+      <div class="metric">
+        <div class="metric-top">
+          <span class="metric-name">DISK</span>
+          <span class="metric-pct" id="disk-pct">--- %</span>
+        </div>
+        <div class="bar-ascii only-fallout" id="disk-bar">&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;</div>
+        <div class="bar-pill only-liquid"><div class="fill disk" id="disk-pill"></div></div>
+        <div class="metric-detail" id="disk-detail">--- GB / --- GB</div>
+      </div>
+
+    </div>
+
+    <div class="divider only-fallout">&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;</div>
+
+    <!-- Fallout footer -->
+    <div class="f-footer only-fallout">
+      <div class="status-row">
+        <span class="status-label">STATUS:</span>
+        <span class="status-val" id="status-val">INITIALIZING<span class="blink">&#9646;</span></span>
+      </div>
+      <div class="timestamp" id="timestamp">--:--:--</div>
+    </div>
+
+    <!-- Liquid footer -->
+    <div class="l-footer only-liquid">
+      <span class="l-pill" id="l-status">NOMINAL</span>
+      <span class="l-muted">Polling 1 Hz</span>
+    </div>
+
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

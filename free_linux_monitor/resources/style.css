@@ -1,0 +1,486 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Free Linux Monitor — panel stylesheet
+   Two themes toggled via body class:
+     .theme-liquid   — translucent glass, system sans, pill bars, rounded
+     .theme-fallout  — VT323 CRT phosphor green, ASCII bars, scanlines
+   Body class `show-breakdown` swaps the MEMORY single bar for the
+   stacked 5-color bar + 5-row legend.
+   ═══════════════════════════════════════════════════════════════════ */
+
+@font-face {
+  font-family: 'VT323';
+  font-style: normal;
+  font-weight: 400;
+  src: url('VT323.ttf') format('truetype');
+  font-display: block;
+}
+
+*, *::before, *::after {
+  margin: 0; padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+  position: relative;
+}
+
+/* The GTK panel uses an RGBA visual; the body owns its own background so
+   the liquid theme can layer translucent glass and the fallout theme can
+   paint opaque CRT green. */
+body { background: transparent; }
+
+/* Default theme visibility rules */
+.theme-liquid  .only-fallout { display: none !important; }
+.theme-fallout .only-liquid  { display: none !important; }
+
+/* Breakdown visibility — only show rows / stacked when body has it */
+body:not(.show-breakdown) .only-breakdown    { display: none !important; }
+body.show-breakdown       .only-no-breakdown { display: none !important; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   LIQUID GLASS theme
+   ═══════════════════════════════════════════════════════════════════ */
+
+.theme-liquid {
+  color: rgba(255,255,255,0.95);
+  font-family: 'Inter', 'Ubuntu', 'Cantarell', 'Noto Sans',
+               -apple-system, BlinkMacSystemFont, 'Helvetica Neue',
+               Arial, sans-serif;
+  font-size: 13px;
+}
+
+.theme-liquid .container {
+  padding: 16px 16px 14px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: relative;
+  border-radius: 18px;
+  /* Dark glass wash. WebKit2GTK supports backdrop-filter; on systems where
+     the compositor exposes a real blur (KWin/Mutter w/ blur extension) it'll
+     show through to the desktop, otherwise the gradient alone keeps text
+     legible against any wallpaper. */
+  background:
+    linear-gradient(180deg,
+      rgba(30,32,40,0.78) 0%,
+      rgba(20,22,28,0.84) 55%,
+      rgba(12,14,20,0.88) 100%);
+  -webkit-backdrop-filter: saturate(180%) blur(28px);
+  backdrop-filter:         saturate(180%) blur(28px);
+  box-shadow:
+    inset 0  1px 0 rgba(255,255,255,0.60),   /* crisp top specular */
+    inset 0 -1px 0 rgba(0,0,0,0.20),         /* soft bottom shadow */
+    inset 0  0 0 1px rgba(255,255,255,0.10); /* hairline inside border */
+}
+/* Upper-half gloss — distinguishes Liquid Glass from flat frosted acrylic. */
+.theme-liquid .container::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 52%;
+  background: linear-gradient(180deg,
+              rgba(255,255,255,0.13) 0%,
+              rgba(255,255,255,0.04) 55%,
+              transparent             100%);
+  pointer-events: none;
+  z-index: 0;
+  border-radius: 18px 18px 0 0;
+}
+.theme-liquid .container > * { position: relative; z-index: 1; }
+
+.theme-liquid .l-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: 2px;
+}
+.theme-liquid .l-title {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.58);
+}
+.theme-liquid .l-time {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255,255,255,0.5);
+}
+
+.theme-liquid .metrics {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 14px;
+}
+
+.theme-liquid .metric {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.theme-liquid .metric-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.theme-liquid .metric-name {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.55);
+}
+
+.theme-liquid .metric-pct {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: rgba(255,255,255,0.98);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.theme-liquid .bar-pill {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.18);
+  box-shadow:
+    inset 0  1px 1px rgba(0,0,0,0.22),
+    inset 0 -1px 0   rgba(255,255,255,0.06);
+  overflow: hidden;
+}
+.theme-liquid .bar-pill .fill {
+  height: 100%;
+  border-radius: 999px;
+  width: 0;
+  transition: width 0.3s ease-out;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.35);
+}
+.theme-liquid .bar-pill .fill.cpu  { background: linear-gradient(90deg, #22c4ff, #5a7fff); }
+.theme-liquid .bar-pill .fill.mem  { background: linear-gradient(90deg, #38f8c8, #22c4ff); }
+.theme-liquid .bar-pill .fill.gpu  { background: linear-gradient(90deg, #c078ff, #ff79d6); }
+.theme-liquid .bar-pill .fill.disk { background: linear-gradient(90deg, #ffb37a, #ff7a9b); }
+.theme-liquid .bar-pill .fill.warn { background: linear-gradient(90deg, #ffb347, #ff7a00); }
+.theme-liquid .bar-pill .fill.crit { background: linear-gradient(90deg, #ff6666, #ff3030); }
+
+/* Memory breakdown — stacked pill + 5 rows */
+.theme-liquid .mem-stacked-pill {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.18);
+  box-shadow:
+    inset 0  1px 1px rgba(0,0,0,0.22),
+    inset 0 -1px 0   rgba(255,255,255,0.06);
+  overflow: hidden;
+  display: flex;
+}
+.theme-liquid .mem-stacked-pill span {
+  display: block;
+  height: 100%;
+  width: 0;
+  transition: width 0.3s ease-out;
+}
+.theme-liquid .mem-stacked-pill .app  { background: #35ffb0; }
+.theme-liquid .mem-stacked-pill .wire { background: #ffd24a; }
+.theme-liquid .mem-stacked-pill .comp { background: #58d7ff; }
+.theme-liquid .mem-stacked-pill .cach { background: rgba(255,255,255,0.36); }
+.theme-liquid .mem-stacked-pill .free { background: rgba(255,255,255,0.12); }
+
+.theme-liquid .mem-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 2px;
+}
+.theme-liquid .mem-row {
+  display: grid;
+  grid-template-columns: 11px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  font-size: 11.5px;
+}
+.theme-liquid .mem-row .sw {
+  width: 10px; height: 10px;
+  border-radius: 3px;
+}
+.theme-liquid .mem-row .sw.app  { background: #35ffb0; box-shadow: 0 0 6px rgba(53,255,176,0.55); }
+.theme-liquid .mem-row .sw.wire { background: #ffd24a; box-shadow: 0 0 6px rgba(255,210,74,0.55); }
+.theme-liquid .mem-row .sw.comp { background: #58d7ff; box-shadow: 0 0 6px rgba(88,215,255,0.55); }
+.theme-liquid .mem-row .sw.cach { background: rgba(255,255,255,0.5); }
+.theme-liquid .mem-row .sw.free { background: rgba(255,255,255,0.2); }
+.theme-liquid .mem-row .nm {
+  color: rgba(255,255,255,0.55);
+  letter-spacing: 0.06em;
+  font-size: 10.5px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+.theme-liquid .mem-row .vl {
+  color: rgba(255,255,255,0.92);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.theme-liquid .metric-detail {
+  font-size: 10.5px;
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 0.02em;
+  margin-top: -2px;
+}
+
+.theme-liquid .mem-release-toast {
+  font-size: 10.5px;
+  color: #35ffb0;
+  letter-spacing: 0.03em;
+  font-weight: 500;
+  min-height: 12px;
+  opacity: 0;
+  transition: opacity 0.35s ease-out;
+  margin-top: 2px;
+}
+.theme-liquid .mem-release-toast.visible { opacity: 1; }
+
+.theme-liquid .l-footer {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.10);
+  font-size: 10.5px;
+}
+.theme-liquid .l-pill {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(53,255,176,0.22);
+  color: #35ffb0;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 10px;
+}
+.theme-liquid .l-pill.warn { background: rgba(255,179,71,0.22); color: #ffb347; }
+.theme-liquid .l-pill.crit { background: rgba(255,90,90,0.25); color: #ff6a6a; }
+.theme-liquid .l-muted {
+  color: rgba(255,255,255,0.42);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   FALLOUT theme — CRT phosphor terminal
+   ═══════════════════════════════════════════════════════════════════ */
+
+.theme-fallout {
+  background: #060d06;
+  color: #39ff14;
+  font-family: 'VT323', 'Andale Mono', 'DejaVu Sans Mono',
+               'Liberation Mono', 'Courier New', Courier, monospace;
+  font-size: 15px;
+}
+
+.theme-fallout .container {
+  padding: 18px 20px 14px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #060d06;
+  border-radius: 0;
+}
+
+/* Scanline overlay */
+.theme-fallout::before {
+  content: '';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 3px,
+    rgba(0,0,0,0.18) 3px,
+    rgba(0,0,0,0.18) 4px
+  );
+  pointer-events: none;
+  z-index: 50;
+}
+/* CRT vignette */
+.theme-fallout::after {
+  content: '';
+  position: fixed; inset: 0;
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    transparent 55%,
+    rgba(0,0,0,0.65) 100%
+  );
+  pointer-events: none;
+  z-index: 51;
+}
+
+.theme-fallout .f-header {
+  text-align: center;
+  line-height: 1.3;
+}
+.theme-fallout .f-logo {
+  font-size: 17px;
+  letter-spacing: 1px;
+  color: #39ff14;
+  text-shadow: 0 0 10px #39ff14, 0 0 20px #39ff14;
+}
+.theme-fallout .f-model {
+  font-size: 12px;
+  color: #1a7a00;
+  letter-spacing: 2px;
+  margin-top: 2px;
+}
+
+.theme-fallout .divider {
+  color: #1a7a00;
+  font-size: 13px;
+  letter-spacing: -1px;
+  line-height: 1;
+  text-align: center;
+}
+
+.theme-fallout .metrics {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+}
+
+.theme-fallout .metric {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.theme-fallout .metric-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.theme-fallout .metric-name {
+  font-size: 13px;
+  letter-spacing: 3px;
+  color: #39ff14;
+}
+.theme-fallout .metric-pct {
+  font-size: 14px;
+  color: #39ff14;
+  text-shadow: 0 0 6px #39ff14;
+  min-width: 52px;
+  text-align: right;
+}
+
+.theme-fallout .bar-ascii {
+  font-size: 14px;
+  line-height: 1;
+  letter-spacing: 1px;
+  color: #1a5500;
+}
+.theme-fallout .bar-ascii .lit  { color: #39ff14; text-shadow: 0 0 5px #39ff14; }
+.theme-fallout .bar-ascii .warn { color: #ffcc00; text-shadow: 0 0 5px #ffcc00; }
+.theme-fallout .bar-ascii .crit { color: #ff3a00; text-shadow: 0 0 5px #ff3a00; }
+
+/* Memory stacked (ASCII) */
+.theme-fallout .mem-stacked-ascii {
+  font-size: 14px;
+  line-height: 1;
+  letter-spacing: 1px;
+}
+.theme-fallout .mem-stacked-ascii .app  { color: #39ff14; text-shadow: 0 0 5px #39ff14; }
+.theme-fallout .mem-stacked-ascii .wire { color: #ffd24a; text-shadow: 0 0 5px #ffd24a; }
+.theme-fallout .mem-stacked-ascii .comp { color: #3cf0ff; text-shadow: 0 0 5px #3cf0ff; }
+.theme-fallout .mem-stacked-ascii .cach { color: #1a7a00; }
+.theme-fallout .mem-stacked-ascii .free { color: #1a5500; }
+
+/* Memory 5-row legend grid */
+.theme-fallout .mem-rows {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 2px 10px;
+  margin-top: 4px;
+  font-size: 13px;
+}
+.theme-fallout .mem-row {
+  display: contents;
+}
+.theme-fallout .mem-row .sw {
+  width: 8px; height: 8px;
+  align-self: center;
+  margin-top: 1px;
+}
+.theme-fallout .mem-row .sw.app  { background: #39ff14; box-shadow: 0 0 4px #39ff14; }
+.theme-fallout .mem-row .sw.wire { background: #ffd24a; box-shadow: 0 0 4px #ffd24a; }
+.theme-fallout .mem-row .sw.comp { background: #3cf0ff; box-shadow: 0 0 4px #3cf0ff; }
+.theme-fallout .mem-row .sw.cach { background: #1a7a00; }
+.theme-fallout .mem-row .sw.free { background: #1a5500; }
+.theme-fallout .mem-row .nm {
+  color: #39ff14;
+  letter-spacing: 2px;
+  font-size: 12px;
+}
+.theme-fallout .mem-row .vl {
+  color: #39ff14;
+  text-align: right;
+  text-shadow: 0 0 4px #39ff14;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 1px;
+}
+
+.theme-fallout .metric-detail {
+  font-size: 11px;
+  color: #1a7a00;
+  letter-spacing: 1px;
+}
+
+.theme-fallout .mem-release-toast {
+  font-size: 11px;
+  color: #39ff14;
+  text-shadow: 0 0 4px #39ff14;
+  letter-spacing: 1px;
+  min-height: 13px;
+  opacity: 0;
+  transition: opacity 0.35s ease-out;
+}
+.theme-fallout .mem-release-toast.visible { opacity: 1; }
+
+.theme-fallout .f-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+.theme-fallout .f-footer .status-label {
+  color: #1a7a00;
+  letter-spacing: 2px;
+}
+.theme-fallout .f-footer .status-val {
+  color: #39ff14;
+  text-shadow: 0 0 6px #39ff14;
+  letter-spacing: 1px;
+}
+.theme-fallout .f-footer .status-val.warn { color: #ffcc00; text-shadow: 0 0 6px #ffcc00; }
+.theme-fallout .f-footer .status-val.crit { color: #ff3a00; text-shadow: 0 0 6px #ff3a00; }
+.theme-fallout .f-footer .timestamp {
+  font-size: 11px;
+  color: #1a7a00;
+  letter-spacing: 1px;
+}
+
+.theme-fallout .blink {
+  animation: blink 1.1s step-end infinite;
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
