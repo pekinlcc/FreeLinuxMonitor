@@ -24,7 +24,29 @@ Pure Python 3 + GTK 3 + WebKit2 + AyatanaAppIndicator3. Reuses the Mac dashboard
 
 ## Install
 
-From the repo root:
+### Option A — Prebuilt `.deb` (Ubuntu / Debian)
+
+Grab the latest from [Releases](https://github.com/pekinlcc/FreeLinuxMonitor/releases/latest), then:
+
+```bash
+sudo apt install ./free-linux-monitor_*.deb
+```
+
+`apt` resolves all the `gir1.2-*` runtime deps automatically. The package installs to:
+
+```
+/usr/bin/free-linux-monitor
+/usr/lib/python3/dist-packages/free_linux_monitor/
+/usr/share/applications/free-linux-monitor.desktop
+/usr/share/icons/hicolor/scalable/apps/free-linux-monitor.svg
+/usr/sbin/free-linux-monitor-purge
+```
+
+Uninstall with `sudo apt remove free-linux-monitor`.
+
+### Option B — User-prefix install from source
+
+If you want to hack on the code or don't have apt, run:
 
 ```bash
 ./scripts/install.sh
@@ -39,10 +61,19 @@ This installs into your user prefix only — no root needed:
 ~/.local/share/icons/hicolor/scalable/apps/free-linux-monitor.svg
 ```
 
-Run it from the application grid, or from a terminal:
+### Run
+
+From the application grid, or from a terminal:
 
 ```bash
 free-linux-monitor &
+```
+
+### Build the `.deb` yourself
+
+```bash
+./scripts/build-deb.sh
+# → dist/free-linux-monitor_<version>_all.deb
 ```
 
 ## Features
