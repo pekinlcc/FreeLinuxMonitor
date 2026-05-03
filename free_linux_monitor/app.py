@@ -265,7 +265,11 @@ class App:
         self.indicator.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
         self.indicator.set_attention_icon_full("free-linux-monitor-attention", "alert")
         self.indicator.set_title("Free Linux Monitor")
-        self.indicator.set_label("", "")
+        # Don't seed the label with ("", "") here. On GNOME's AppIndicator
+        # extension that empty pair can win the registration race against
+        # the first real set_label() — the host caches the zero-width label
+        # and the proper text only appears once the user toggles the menu
+        # item, which forces a fresh property-change signal.
 
         # Polling state
         self._cached_snap: Optional[metrics.MetricsSnapshot] = None
@@ -283,10 +287,17 @@ class App:
 
         self._build_menu()
 
-        # 1Hz polling. tick() is also called once now so the snapshot exists
-        # before the user opens the panel.
-        self._tick()
+        # 1Hz polling. The first tick is deferred to an idle callback so
+        # the indicator has time to register with the StatusNotifierWatcher
+        # before we push a label — calling set_label() synchronously in
+        # __init__ races the registration on GNOME and the host can keep
+        # the original empty label until something forces a re-render.
+        GLib.idle_add(self._first_tick)
         GLib.timeout_add(1000, self._tick_wrapper)
+
+    def _first_tick(self) -> bool:
+        self._tick_wrapper()
+        return False    # one-shot
 
     # ── Menu ────────────────────────────────────────────────────────────────
 
@@ -492,7 +503,12 @@ class App:
             self.indicator.set_label("", "")
             return
 
-        pool = alerts if is_alert else self._available_metrics(snap)
+        # Always rotate over every available metric, even during an alert.
+        # The status switch to ATTENTION already swaps the icon to the red
+        # variant, which is the visual alert. Restricting the label pool to
+        # alerting metrics meant a near-full disk pinned the label to
+        # "DSK 9X%" forever and CPU / MEM / GPU never got airtime.
+        pool = self._available_metrics(snap)
         if not pool:
             self.indicator.set_label("", "")
             return
