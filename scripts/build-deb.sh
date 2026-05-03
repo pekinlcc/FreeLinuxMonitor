@@ -41,11 +41,14 @@ install -d "$STAGE/usr/share/applications"
 sed 's|^Exec=.*|Exec=/usr/bin/free-linux-monitor|' free-linux-monitor.desktop \
     > "$STAGE/usr/share/applications/free-linux-monitor.desktop"
 
-# Indicator icon (referenced by Icon= in the desktop entry / AppIndicator
-# theme path lookup)
+# Indicator icon (referenced by Icon= in the desktop entry) plus the
+# attention variant the tray swaps to on alert. Both must ship so a
+# stale icon cache never resolves to a missing file.
 install -d "$STAGE/usr/share/icons/hicolor/scalable/apps"
 cp free_linux_monitor/icons/free-linux-monitor.svg \
     "$STAGE/usr/share/icons/hicolor/scalable/apps/free-linux-monitor.svg"
+cp free_linux_monitor/icons/free-linux-monitor-attention.svg \
+    "$STAGE/usr/share/icons/hicolor/scalable/apps/free-linux-monitor-attention.svg"
 
 # Sudoers helper (optional — won't be active until /etc/sudoers.d entry
 # is written by setup-sudoers.sh)
@@ -90,7 +93,7 @@ Description: Minimal system tray monitor with retro CRT / Liquid Glass themes
  a verbatim port of the FreeMacMonitor dashboard (HTML/CSS/JS).
 EOF
 
-echo "[4/5] Writing postinst (icon cache refresh)"
+echo "[4/5] Writing postinst / postrm (icon + desktop cache refresh)"
 cat > "$STAGE/DEBIAN/postinst" <<'EOF'
 #!/bin/sh
 set -e
@@ -103,6 +106,23 @@ fi
 exit 0
 EOF
 chmod 0755 "$STAGE/DEBIAN/postinst"
+
+# postrm: refresh caches after the icon and .desktop file are gone, so
+# launchers don't keep a phantom entry pointing at a deleted file.
+cat > "$STAGE/DEBIAN/postrm" <<'EOF'
+#!/bin/sh
+set -e
+if [ "$1" = "remove" ] || [ "$1" = "purge" ] || [ "$1" = "upgrade" ]; then
+    if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+        gtk-update-icon-cache -q -t -f /usr/share/icons/hicolor 2>/dev/null || true
+    fi
+    if command -v update-desktop-database >/dev/null 2>&1; then
+        update-desktop-database -q /usr/share/applications 2>/dev/null || true
+    fi
+fi
+exit 0
+EOF
+chmod 0755 "$STAGE/DEBIAN/postrm"
 
 echo "[5/5] Building $DEB"
 fakeroot dpkg-deb --build --root-owner-group -Zxz "$STAGE" "$DIST/$DEB"

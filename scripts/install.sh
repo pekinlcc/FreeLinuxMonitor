@@ -42,12 +42,20 @@ chmod 0755 "$BIN_DIR/free-linux-monitor"
 sed "s|^Exec=.*|Exec=$BIN_DIR/free-linux-monitor|" \
     "$REPO_DIR/free-linux-monitor.desktop" > "$APPS_DIR/free-linux-monitor.desktop"
 
-# Indicator icon for the system tray (referenced by Icon= name)
-cp "$REPO_DIR/$PKG_NAME/icons/free-linux-monitor.svg" "$ICON_DIR/free-linux-monitor.svg"
+# Indicator + app-launcher icons (referenced by Icon= name in the .desktop
+# file and via set_icon_theme_path() at runtime). Ship the attention
+# variant alongside so the tray can swap on alert without the cache going
+# stale and pointing at a missing file.
+cp "$REPO_DIR/$PKG_NAME/icons/free-linux-monitor.svg" \
+    "$ICON_DIR/free-linux-monitor.svg"
+cp "$REPO_DIR/$PKG_NAME/icons/free-linux-monitor-attention.svg" \
+    "$ICON_DIR/free-linux-monitor-attention.svg"
 
-# Refresh icon cache; non-fatal if gtk-update-icon-cache is absent.
+# Force-refresh the user hicolor cache. Without -f, gtk-update-icon-cache
+# silently no-ops on dirs lacking an index.theme — leaving stale entries
+# from a prior install pointing at files we just replaced or removed.
 if command -v gtk-update-icon-cache >/dev/null 2>&1; then
-    gtk-update-icon-cache -t "$HOME/.local/share/icons/hicolor" 2>/dev/null || true
+    gtk-update-icon-cache -q -t -f "$HOME/.local/share/icons/hicolor" 2>/dev/null || true
 fi
 update-desktop-database "$APPS_DIR" 2>/dev/null || true
 
