@@ -17,6 +17,7 @@ the WebView; identical contract (`window.updateMetrics(data, opts)` and
 
 from __future__ import annotations
 
+import fcntl
 import json
 import os
 import sys
@@ -684,10 +685,37 @@ class App:
             pass
 
 
+_singleton_lock_fd: Optional[int] = None
+
+
+def _acquire_singleton_lock() -> bool:
+    # Per-user lock so a second tray instance (e.g. GNOME re-firing the
+    # XDG autostart entry after a long suspend/resume) exits silently
+    # instead of fighting the running one for the indicator slot.
+    global _singleton_lock_fd
+    runtime_dir = os.environ.get("XDG_RUNTIME_DIR") or f"/tmp"
+    lock_path = os.path.join(runtime_dir, f"free-linux-monitor.{os.getuid()}.lock")
+    try:
+        fd = os.open(lock_path, os.O_RDWR | os.O_CREAT, 0o600)
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        return False
+    except OSError as e:
+        print(f"[free-linux-monitor] lock open failed ({e}); skipping singleton check",
+              file=sys.stderr)
+        return True
+    _singleton_lock_fd = fd
+    return True
+
+
 def main() -> int:
     if not INDEX_HTML.exists():
         print(f"Resource missing: {INDEX_HTML}", file=sys.stderr)
         return 1
+    if not _acquire_singleton_lock():
+        print("[free-linux-monitor] another instance is already running; exiting.",
+              file=sys.stderr)
+        return 0
     App()
     Gtk.main()
     return 0
